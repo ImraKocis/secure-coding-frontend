@@ -72,7 +72,7 @@
 
 .overlay {
     background: #5a6063;
-    background: -webkit-linear-gradient(to right, #606263, #252626);
+    background: -webkit-linear-gradient(right, #606263, #252626);
     background: linear-gradient(to right, #606263, #252626);
     background-repeat: no-repeat;
     background-size: cover;
