@@ -23,18 +23,19 @@ export const userColumns: ColumnDef<User>[] = [
   },
   {
     accessorKey: "tanks",
+    id: "numoftanks",
     header: "Number of Tanks",
-    cell: ({ getValue }) => (getValue() as Tank[]).length,
+    cell: ({ getValue }) => (getValue() as Tank[])?.length,
   },
   {
     accessorKey: "tanks",
     header: "Tanks",
     cell: ({ row }) => {
-      const tanks = row.original.tanks;
+      const tanks = row.original?.tanks;
       return (
         <ul>
-          {tanks.map((tank) => (
-            <li key={tank.id}>
+          {tanks?.map((tank, index) => (
+            <li key={`tank-${tank.id}`}>
               {tank.name} ({tank.type})
             </li>
           ))}

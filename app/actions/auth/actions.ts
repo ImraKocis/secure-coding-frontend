@@ -79,6 +79,7 @@ export async function refreshTokens() {
   const data = await response.json();
   console.log("data in refreshTokens()==>", data);
   if (!response.ok) return null;
+  await deleteSession();
   await createSession({
     token: data.access_token,
     refreshToken: data.refresh_token,

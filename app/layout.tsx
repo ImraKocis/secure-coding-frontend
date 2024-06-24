@@ -7,6 +7,7 @@ import { getUser } from "@/app/actions/user/actions";
 import { Toaster } from "@/components/ui/toaster";
 import { SideNavigation } from "@/app/ui/navigation/side-navigation";
 import { LayoutWrapper } from "@/app/ui/main/layout-wrapper";
+import { getSession } from "@/app/actions/auth/session";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -24,6 +25,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUser();
+  const session = await getSession();
   return (
     <html lang="en">
       <body
@@ -32,7 +34,7 @@ export default async function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers user={user}>
+        <Providers user={user} session={session}>
           <main className="flex relative h-full w-full">
             <SideNavigation />
             <LayoutWrapper>{children}</LayoutWrapper>

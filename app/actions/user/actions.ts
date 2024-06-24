@@ -6,11 +6,6 @@ import { refreshTokens } from "@/app/actions/auth/actions";
 
 export async function getUser(): Promise<User | null> {
   let tokens = await getSession();
-  // console.log("user actions getUser() tokens ==> ", tokens);
-  if (!tokens.jwt && tokens.rt) {
-    await refreshTokens();
-    tokens = await getSession();
-  }
   if (!tokens.jwt) return null;
   const response = await fetch(`${process.env.API_BASE_URL}/user/me`, {
     method: "GET",
@@ -22,7 +17,7 @@ export async function getUser(): Promise<User | null> {
     },
   });
   const data = await response.json();
-  // console.log("user actions getUser() data ==> ", data);
+  console.log("user actions getUser() data ==> ", data);
   if (response.ok) return data;
   return null;
 }

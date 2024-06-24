@@ -4,8 +4,6 @@ import authReducer from "./features/authSlice";
 import navigationBarReducer from "./features/navigationBarSlice";
 import subscriptionReducer from "./features/subscriptionSlice";
 
-// State
-
 export const makeStore = () => {
   return configureStore({
     reducer: {

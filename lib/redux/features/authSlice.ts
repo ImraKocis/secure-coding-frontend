@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthResponse } from "@/lib/types/auth";
+import { AuthResponse, Session } from "@/lib/types/auth";
 
 export interface AuthSlice {
-  auth: AuthResponse | null;
+  auth: Session | null;
 }
 
 const initialState: AuthSlice = {
@@ -13,7 +13,7 @@ export const authSlice = createSlice({
   name: "authSlice",
   initialState,
   reducers: {
-    set: (state, action: PayloadAction<AuthResponse | null>) => {
+    set: (state, action: PayloadAction<Session | null>) => {
       state.auth = action.payload;
     },
     clear: (state) => {

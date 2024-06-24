@@ -32,7 +32,6 @@ export const tankColumns: ColumnDef<Tank>[] = [
     accessorKey: "type",
     header: "Type",
   },
-  // { accessorKey: "User.email", header: "Assigned to" },
   {
     id: "actions",
     header: "Actions",
@@ -41,14 +40,20 @@ export const tankColumns: ColumnDef<Tank>[] = [
       return (
         <div className="flex justify-center items-center space-x-2 z-50">
           <Button
+            key={`assign-${tank.id}`}
             className="text-xs"
             disabled={!!tank.userId}
             onClick={async () => await assignTank(tank.id)}
           >
             Assign to me
           </Button>
-          <Edit className="cursor-pointer" onClick={() => updateTank(tank)} />
+          <Edit
+            key={`update-${tank.id}`}
+            className="cursor-pointer"
+            onClick={() => updateTank(tank)}
+          />
           <Trash
+            key={`delete-${tank.id}`}
             className="cursor-pointer"
             onClick={async () => await deleteTank(tank.id)}
           />
