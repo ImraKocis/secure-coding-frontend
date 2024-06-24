@@ -36,3 +36,5 @@ yarn-error.log*
 next-env.d.ts
 /.env
 /.idea/sonarlint
+/.scannerwork/.sonar_lock
+/.scannerwork/report-task.txt

@@ -51,7 +51,6 @@ export async function assignTank(tankId: number): Promise<boolean> {
 }
 
 export async function getAllUsersAndTanks(): Promise<User[]> {
-  const session = await getSession();
   const response = await fetch(`${process.env.API_BASE_URL}/user`);
 
   if (!response.ok) return [];
