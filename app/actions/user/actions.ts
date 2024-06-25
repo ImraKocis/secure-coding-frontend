@@ -51,8 +51,14 @@ export async function assignTank(tankId: number): Promise<boolean> {
 }
 
 export async function getAllUsersAndTanks(): Promise<User[]> {
-  const response = await fetch(`${process.env.API_BASE_URL}/user`);
+  const response = await fetch(`${process.env.API_BASE_URL}/user`, {
+    next: {
+      revalidate: 1,
+    },
+  });
 
   if (!response.ok) return [];
-  return await response.json();
+  const data = await response.json();
+  console.log("user actions getAllUsersAndTanks() data ==> ", data);
+  return data;
 }

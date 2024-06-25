@@ -8,14 +8,12 @@ export const registerFormSchema = z
       .min(8, "Password must be at least 8 characters")
       .max(24, "Password can be 24 characters long")
       .regex(
-        new RegExp(`^[\s\S]*$`),
-        "Please use at least one number and one letter",
+        new RegExp(
+          `^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[\\sA-Za-z\\d@$!%*?&]{8,24}$`,
+        ),
+        "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character",
       ),
-    confirmPassword: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(24, "Password can be 24 characters long")
-      .regex(new RegExp(`^[\s\S]*$`), "Please use at least one number letter"),
+    confirmPassword: z.string(),
   })
   .refine(
     (values) => {
