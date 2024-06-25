@@ -224,6 +224,8 @@ application and document the example of token usage.
 
 #### Solution
 
+**1. Backend**
+
 First, we must create authentication logic on backend application, for backend we 
 are using NestJs, modern Typescript backend framework, alongside Primsa ORM and 
 Postgres database.
@@ -231,226 +233,241 @@ Postgres database.
 Let’s assume that we are familiar with syntax of NestJs and Primsa, and that we have
 already created user modal.
 
-We will create `auth.service.ts` with `AuthService` as `injectable` service.
-There will be five functions that will handle authentication logic.
-
-```typescript
-@Injectable()
-export class AuthService {
-    constructor(
-        private prisma: PrismaService,
-        private jwtService: JwtService,
-        private config: ConfigService,
-    ) {}
-
-    async signupLocal(dto: AuthDto): Promise<Tokens> {
-        const hash = await argon.hash(dto.password);
-
-        const user = await this.prisma.user
-            .create({
-                data: {
-                    email: dto.email,
-                    hash,
-                },
-            })
-            .catch((error) => {
-                if (error instanceof PrismaClientKnownRequestError) {
-                    if (error.code === 'P2002') {
-                        throw new ForbiddenException('Credentials incorrect');
-                    }
-                }
-                throw error;
-            });
-
-        const tokens = await this.getTokens(user.id, user.email);
-        await this.updateRtHash(user.id, tokens.refresh_token);
-
-        return tokens;
-    }
-
-    async signinLocal(dto: AuthDto): Promise<Tokens> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                email: dto.email,
-            },
-        });
-
-        if (!user) throw new ForbiddenException('Access Denied');
-
-        const passwordMatches = await argon.verify(user.hash, dto.password);
-        if (!passwordMatches) throw new ForbiddenException('Access Denied');
-
-        const tokens = await this.getTokens(user.id, user.email);
-        await this.updateRtHash(user.id, tokens.refresh_token);
-
-        return tokens;
-    }
-
-    async logout(userId: number): Promise<boolean> {
-        await this.prisma.user.updateMany({
-            where: {
-                id: userId,
-                hashedRt: {
-                    not: null,
-                },
-            },
-            data: {
-                hashedRt: null,
-            },
-        });
-        return true;
-    }
-
-    async refreshTokens(userId: number, rt: string): Promise<Tokens> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id: userId,
-            },
-        });
-        if (!user || !user.hashedRt) throw new ForbiddenException('Access Denied');
-
-        const rtMatches = await argon.verify(user.hashedRt, rt);
-        if (!rtMatches) throw new ForbiddenException('Access Denied');
-
-        const tokens = await this.getTokens(user.id, user.email);
-        await this.updateRtHash(user.id, tokens.refresh_token);
-
-        return tokens;
-    }
-
-    async updateRtHash(userId: number, rt: string): Promise<void> {
-        const hash = await argon.hash(rt);
-        await this.prisma.user.update({
-            where: {
-                id: userId,
-            },
-            data: {
-                hashedRt: hash,
-            },
-        });
-    }
-
-    async getTokens(userId: number, email: string): Promise<Tokens> {
-        const jwtPayload: JwtPayload = {
-            sub: userId,
-            email: email,
-        };
-
-        const [at, rt] = await Promise.all([
-            this.jwtService.signAsync(jwtPayload, {
-                secret: this.config.get<string>('AT_SECRET'),
-                expiresIn: '15m',
-            }),
-            this.jwtService.signAsync(jwtPayload, {
-                secret: this.config.get<string>('RT_SECRET'),
-                expiresIn: '7d',
-            }),
-        ]);
-
-        return {
-            access_token: at,
-            refresh_token: rt,
-            id: userId,
-        };
-    }
-}
-```
+We will create `auth.service.ts` with `AuthService` class as `injectable` class.
 
 After creating `auth.service.ts` we must create `auth.controller.ts` that will handle 
 requests from frontend application.
 
-```typescript
-@Controller('auth')
-export class AuthController {
-  constructor(private authService: AuthService) {}
-
-  @Public()
-  @Post('local/signup')
-  @HttpCode(HttpStatus.CREATED)
-  signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
-    return this.authService.signupLocal(dto);
-  }
-
-  @Public()
-  @Post('local/signin')
-  @HttpCode(HttpStatus.OK)
-  signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
-    console.log('local/signin');
-    return this.authService.signinLocal(dto);
-  }
-
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  logout(@GetCurrentUserId() userId: number): Promise<boolean> {
-    return this.authService.logout(userId);
-  }
-
-  @Public()
-  @UseGuards(RtGuard)
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  refreshTokens(
-    @GetCurrentUserId() userId: number,
-    @GetCurrentUser('refreshToken') refreshToken: string,
-  ): Promise<Tokens> {
-    console.log('refresh');
-    return this.authService.refreshTokens(userId, refreshToken);
-  }
-}
-```
-
 After creating `auth.controller.ts` we must create `at.guard.ts` and `rt.guard.ts`
 that will handle access and refresh token logic.
-
-
-`at.guard.ts`
-```typescript
-@Injectable()
-export class AtGuard extends AuthGuard('jwt') {
-  constructor(private reflector: Reflector) {
-    super();
-  }
-
-  canActivate(context: ExecutionContext) {
-    const isPublic = this.reflector.getAllAndOverride('isPublic', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    if (isPublic) return true;
-
-    return super.canActivate(context);
-  }
-}
-```
-
-`rt.guard.ts`
-```typescript
-export class RtGuard extends AuthGuard('jwt-refresh') {
-  constructor() {
-    super();
-  }
-}
-```
 
 Finally, we must modify `app.module.ts` that will handle all request with new
 authentication logic.
 
+Additionally, we will create custom decorators for accessing user data trough access token
+sent in request.
+
+Whole code is available on this [GitHub](https://github.com/ImraKocis/secure-coding) repository.
+
+**2. Frontend**
+
+Since we are using Next.Js as frontend framework we have some great tools to handle secure
+session implementation.
+
+Our approach was to fetch user data at page load time on server side. Since Next.Js offers
+easy way to separate server from client code, so we will handle all requests only on server
+side.
+
+Saying this we will create server action that will handle authentication requests, and also
+we must create server session actions that will handle storing tokens in session storage.
+
+Code snippet for server action:
+
 ```typescript
-@Module({
-  imports: [
-    PrismaModule,
-    ConfigModule.forRoot({ isGlobal: true }),
-    AuthModule,
-    UserModule,
-  ],
-  controllers: [],
-  providers: [
+"use server";
+
+export async function signup(data: SignupData): Promise<AuthResponse | null> {
+  const response = await fetch(
+    `${process.env.API_BASE_URL}/auth/local/signup`,
     {
-      provide: APP_GUARD,
-      useClass: AtGuard,
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }),
     },
-  ],
-})
-export class AppModule {}
+  );
+
+  if (response.status === 201) {
+    const res = await response.json();
+    await createSession({
+      token: res.access_token,
+      refreshToken: res.refresh_token,
+    });
+    return res;
+  }
+  return null;
+}
 ```
+
+Code snippet for server session action:
+
+```typescript
+"use server";
+
+export async function createSession(payload: SessionCookie) {
+  cookies().set("jwt-token", payload.token, {
+    httpOnly: true,
+    secure: true,
+    expires: jwtExpireAt,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  cookies().set("rt-token", payload.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    expires: rtExpireAt,
+    sameSite: "lax",
+    path: "/",
+  });
+}
+```
+
+After implementing these actions we can easily access tokens in our application,
+but only on server side.
+
+Example of token usage:
+
+```typescript
+export async function getUser(): Promise<User | null> {
+  // getting session tokens from session storage
+  let tokens = await getSession();
+  if (!tokens.jwt) return null;
+  const response = await fetch(`${process.env.API_BASE_URL}/user/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokens.jwt}`,
+    },
+    next: {
+      revalidate: 1,
+    },
+  });
+  
+  if (!response.ok) return null;
+  
+  const data = await response.json();
+  return data;
+}
+```
+***
+### Learning Outcome 4
+
+#### Task
+Analyze the SQL injection vulnerability of your application with
+one of available tools online, document the potential bugs and
+describe the current way how the application protects its database from SQL injection
+attacks.
+
+#### Solution
+
+Since we are using Prisma ORM, we are protected from SQL injection attacks.
+Prisma ORM is designed to be safe from SQL injection attacks when used properly.
+
+Prisma uses parameterized queries, which is one of the most effective ways to prevent 
+SQL injection. In parameterized queries, parameters are passed separately from the 
+query text, ensuring that user input is treated as data and not as part of the 
+SQL command.
+
+Example of Prisma query:
+
+```typescript
+ function getById(id: string): Promise<Tank> {
+    try {
+        return this.prisma.tank.findUnique({
+            where: { id: Number(id) },
+        });
+    } catch {
+        return null;
+    }
+}
+```
+
+When using raw SQL queries with Prisma, it's crucial to properly escape user inputs. 
+Prisma provides mechanisms to safely interpolate variables in raw SQL queries using
+the `prisma.$queryRaw` and `prisma.$executeRaw` methods.
+
+Example of Prisma raw query:
+
+```javascript
+const result = await prisma.$queryRaw`SELECT * FROM User WHERE email = ${userEmail}`;
+```
+
+Additionally, Prisma provides out-of-the-box support for popular methods like
+`findUnique`, `findMany`, `create`, `update`, and `delete`.
+***
+
+### Learning Outcome 5
+
+#### Task
+Implement an example of serialization and implement the deserialization protection
+based on whitelisting the classes that can be deserialized.
+
+#### Solution
+
+
+**1. Serialization**
+
+In our Backend application, we will create a SerializationService class that will 
+return plain object from provided instance.
+
+```typescript
+import { instanceToPlain } from 'class-transformer';
+
+export class SerializationService {
+  static serialize<T>(instance: T): object {
+    return instanceToPlain(instance);
+  }
+}
+```
+
+After that we will use our SerializationService class in our controller to serialize
+our data.
+
+```typescript
+async function getAll(): Promise<Tank[]> {
+    const tanks = await this.tankService.getAll();
+    return tanks.map((tank) => SerializationService.serialize(tank));
+}
+```
+
+**2. Deserialization**
+
+In our backend application, we will create a generic type for class constructor that
+we will use for class deserialization.
+
+```typescript
+export type ClassConstructor<T> = new (...args: any[]) => T;
+```
+
+Then we will create a `whitelisted.deserializer.ts` function that will handle 
+deserialization
+
+```typescript
+const whitelistedClasses = new Set<ClassConstructor<any>>([TankEntity]);
+
+export function safeDeserialize<T>(
+  cls: ClassConstructor<T>,
+  plain: object,
+): T | null {
+  if (whitelistedClasses.has(cls)) {
+    return plainToInstance(cls, plain);
+  }
+  throw new Error(`Class ${cls.name} is not whitelisted for deserialization.`);
+}
+```
+
+Usage of `safeDeserialize` function:
+
+```typescript
+async function create(@Body() data: CreateTankDto): Promise<Tank> {
+  const tank = safeDeserialize(TankEntity, data);
+  return this.tankService.create(tank);
+}
+```
+
+With this approach, we are whitelisting classes that can be deserialized, and we are
+preventing deserialization of unwanted classes, and creation of same. This is nice layer
+of security that we can add to our application.
+
+***
+
+### Learning Outcome 6
+
+#### Task
+
+Use the best practices in implementing authentication and
+authorization to prevent unauthorized access to confidential data.
