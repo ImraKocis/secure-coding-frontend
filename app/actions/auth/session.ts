@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { Session, SessionCookie } from "@/lib/types/auth";
 
-const jwtExpireAt = new Date(Date.now() + 2 * 60 * 1000);
+const jwtExpireAt = new Date(Date.now() + 15 * 60 * 1000);
 const rtExpireAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
 export async function createSession(payload: SessionCookie) {

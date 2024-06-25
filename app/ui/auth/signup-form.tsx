@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,10 +21,24 @@ import { useDispatch } from "react-redux";
 import { set as setUser } from "@/lib/redux/features/userSlice";
 import { getUser } from "@/app/actions/user/actions";
 import { registerFormSchema } from "@/lib/auth/definitions";
-
+import { useEffect, useState } from "react";
+import { PasswordStrengthLine } from "@/app/ui/auth/passwordStrengthLine";
+const handlePasswordStrength = (password: string) => {
+  if (password.length > 8 && password.length < 12) {
+    return "weak";
+  }
+  if (password.length >= 12 && password.length < 16) {
+    return "okay";
+  }
+  if (password.length >= 16) {
+    return "strong";
+  }
+  return "weak";
+};
 export function SignupForm() {
   const { toast } = useToast();
   const dispatch = useDispatch();
+  const [strength, setStrength] = useState<"weak" | "okay" | "strong">("weak");
   const form = useForm<z.infer<typeof registerFormSchema>>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
@@ -55,6 +70,10 @@ export function SignupForm() {
     const user = await getUser();
     dispatch(setUser(user));
   }
+
+  useEffect(() => {
+    setStrength(handlePasswordStrength(form.getValues("password")));
+  }, [form.watch("password")]);
 
   return (
     <Form {...form}>
@@ -88,6 +107,9 @@ export function SignupForm() {
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
+              <FormDescription>
+                <PasswordStrengthLine strength={strength} />
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

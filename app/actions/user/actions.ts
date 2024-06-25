@@ -38,7 +38,7 @@ export async function assignTank(tankId: number): Promise<boolean> {
   const tokens = await getSession();
   const { id } = await getSessionUserId();
   const response = await fetch(
-    `${process.env.API_BASE_URL}/user/assign-tank?userId=${id}&tankId=${tankId}`,
+    `${process.env.API_BASE_URL}/user/add-tank?userId=${id}&tankId=${tankId}`,
     {
       method: "POST",
       headers: {

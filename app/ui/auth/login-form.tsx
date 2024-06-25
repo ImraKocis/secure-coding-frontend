@@ -41,7 +41,7 @@ export function LoginForm() {
       toast({
         variant: "destructive",
         title: "Authorization failed!",
-        description: "Email or password are wrong",
+        description: "Email or password is wrong",
       });
     }
   }

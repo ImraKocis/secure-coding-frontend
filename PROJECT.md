@@ -471,3 +471,32 @@ of security that we can add to our application.
 
 Use the best practices in implementing authentication and
 authorization to prevent unauthorized access to confidential data.
+
+#### Solution
+
+For our application we have some of safe authentication and authorization practices:
+- Use of JWT tokens for authentication, and refresh tokens for refreshing access tokens
+  - Tokens are stored in `httpOnly` and `secure` cookies, this means that tokens are not
+    accessible from client side.
+  - Tokens are stored in `sessionStorage` and are not accessible from other tabs or windows.
+  - Refresh tokens on backend are stored in `database` as a hashed value as a `argon2` hash.
+- Passwords are hashed with `argon2` hashing algorithm.
+- Password had to include at least 8 characters, one uppercase letter, one lowercase letter,
+  one number and one special character. Max length is 24 characters.
+- At registration user can see password strength.
+- Maximum number of login attempts is 5, after that user is locked out, unit his account is 
+  recovered by admin.
+- At authentication attempt, user is notified with generic message if email or password is 
+  incorrect. Like `Email or password is wrong`. No specific message is shown.
+- User has option to quick login if refresh token is still valid.
+- When user logs out, all tokens are invalidated. On both frontend and backend side.
+
+#### Additional Security Measures
+
+What we can do more on production ready application:
+
+- Implement `password` rest functionality.
+- Implement two-factor authentication with `phone number` or `email`.
+- Implement `email` verification before setting account as `ready-to-use`. 
+- Implement `reCAPTCHA`.
+- Add `oAuth2` authentication.
