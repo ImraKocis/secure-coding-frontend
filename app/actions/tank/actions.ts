@@ -6,9 +6,12 @@ import { getSession } from "@/app/actions/auth/session";
 interface TankCreateData {
   name: string;
   nation: string;
-  hitpoints: number;
-  numofcrew: number;
+  hitpoints: string;
+  numofcrew: string;
   type: TankType;
+}
+interface TankUpdateData extends TankCreateData {
+  id: number;
 }
 
 export async function getTanks(): Promise<Tank[] | null> {
@@ -30,19 +33,27 @@ export async function getByName(name: string): Promise<Tank[] | null> {
 
 export async function addTank(data: TankCreateData): Promise<Tank | null> {
   const session = await getSession();
-  const response = await fetch(`${process.env.API_BASE_URL}/tank`, {
+  const response = await fetch(`${process.env.API_BASE_URL}/tanks`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${session.jwt}`,
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      name: data.name,
+      nation: data.nation,
+      hitpoints: data.hitpoints.toString(),
+      numofcrew: data.numofcrew.toString(),
+      type: data.type,
+    }),
   });
-
+  const tank = await response.json();
+  console.log("addTank() tank ==> ", tank);
   if (!response.ok) return null;
-  return await response.json();
+  return tank;
 }
 
-export async function updateTank(data: Tank): Promise<Tank | null> {
+export async function updateTank(data: TankUpdateData): Promise<Tank | null> {
   const session = await getSession();
   const updateData: TankCreateData = {
     name: data.name,

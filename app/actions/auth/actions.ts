@@ -52,7 +52,7 @@ export async function login(data: LoginData): Promise<AuthResponse | null> {
   );
   if (response.ok) {
     const data = await response.json();
-    console.log("auth actions login() data ===> ", data);
+    // console.log("auth actions login() data ===> ", data);
     await createSession({
       token: data.access_token,
       refreshToken: data.refresh_token,
@@ -77,7 +77,7 @@ export async function refreshTokens() {
     },
   });
   const data = await response.json();
-  console.log("data in refreshTokens()==>", data);
+  // console.log("data in refreshTokens()==>", data);
   if (!response.ok) return null;
   await deleteSession();
   await createSession({

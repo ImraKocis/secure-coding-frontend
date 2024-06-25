@@ -17,7 +17,7 @@ export async function getUser(): Promise<User | null> {
     },
   });
   const data = await response.json();
-  console.log("user actions getUser() data ==> ", data);
+  // console.log("user actions getUser() data ==> ", data);
   if (response.ok) return data;
   return null;
 }
@@ -38,7 +38,7 @@ export async function assignTank(tankId: number): Promise<boolean> {
   const tokens = await getSession();
   const { id } = await getSessionUserId();
   const response = await fetch(
-    `${process.env.API_BASE_URL}/user/assign-tank?userId=${id}&tankId=${tankId}`,
+    `${process.env.API_BASE_URL}/user/add-tank?userId=${id}&tankId=${tankId}`,
     {
       method: "POST",
       headers: {
@@ -51,7 +51,11 @@ export async function assignTank(tankId: number): Promise<boolean> {
 }
 
 export async function getAllUsersAndTanks(): Promise<User[]> {
-  const response = await fetch(`${process.env.API_BASE_URL}/user`);
+  const response = await fetch(`${process.env.API_BASE_URL}/user`, {
+    next: {
+      revalidate: 1,
+    },
+  });
 
   if (!response.ok) return [];
   return await response.json();
