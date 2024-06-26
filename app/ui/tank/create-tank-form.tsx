@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useUser } from "@/lib/redux/hooks";
 import { useAlertDialogContext } from "@/app/ui/navigation/alert-dialog-context";
+import { addTank } from "@/app/actions/tank/actions";
 
 export function CreateTankForm(): ReactElement {
   const { toast } = useToast();
@@ -39,8 +40,8 @@ export function CreateTankForm(): ReactElement {
       name: "",
       nation: "",
       type: "HEAVY_TANK",
-      hitpoints: 0,
-      numofcrew: 1,
+      hitpoints: "0",
+      numofcrew: "1",
     },
   });
 
@@ -54,7 +55,7 @@ export function CreateTankForm(): ReactElement {
       return;
     }
 
-    const tank = "createTank()";
+    const tank = await addTank(data);
 
     if (!tank) {
       toast({
