@@ -133,6 +133,35 @@ After fixing these issues, we can re-scan our application with OWASP ZAP tool.
 
 ##### Burp Suite
 
+With Burp Suite tool one of mayor security issues was IDOR (Insecure Direct Object Reference).
+
+Example of IDOR vulnerability
+
+Flow
+- User logs in to the application.
+- User navigates to assign tanks page.
+- With Burp Suite tool we can intercept request and change `tankId` parameter to 
+  another value, and "steal" other user tank/s.
+
+![burp-1](project-images/burp-1.png)
+
+Here we can see that we have tankId, which is number `8`, and we can change this value to any
+other tank id and potentially *steal* other user tank.
+
+To fix this issue we mush add check to our backend application that will check if tank is
+allowed to be assigned to user.
+
+```typescript
+const currentTank = await this.prisma.tank.findUnique({
+  where: { id: tankId },
+});
+
+if (!currentTank) return null;
+// Tank is already assigned to a user
+if (currentTank.userId)
+  throw new ForbiddenException('Tank already assigned');
+```
+
 ***
 
 ### Learning Outcome 2
