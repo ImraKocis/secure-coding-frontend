@@ -8,10 +8,6 @@
 ***June 2024***
 
 ***
-
-### ***Content***
-
-***
 ### Learning Outcome 1
 
 #### Task
